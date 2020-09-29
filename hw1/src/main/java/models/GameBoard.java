@@ -70,7 +70,7 @@ public class GameBoard {
   
   //  Returns board state
   public char[][] getBoardState() {
-    return boardState;
+    return this.boardState;
   }
   
   //  Sets the board state
