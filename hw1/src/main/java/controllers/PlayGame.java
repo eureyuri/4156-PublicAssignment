@@ -31,6 +31,12 @@ public class PlayGame {
     // from the request body
     app.post("/startgame", ctx -> {
       char type = ctx.formParam("type").charAt(0);
+      
+      if (type != 'X' && type != 'O') {
+        ctx.result("Please use either X or O to play.");
+        return;
+      }
+      
       gameBoard = new GameBoard(type);
       ctx.result(gameBoard.toJson());
     });
@@ -39,6 +45,9 @@ public class PlayGame {
     // tries to join the game before player 1 creates the game, simply return.
     app.get("/joingame", ctx -> {
       if (gameBoard == null) {
+        return;
+      } else if (gameBoard.isGameStarted()) {
+        ctx.result("Another user is playing the game.");
         return;
       }
       

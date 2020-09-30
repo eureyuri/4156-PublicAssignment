@@ -135,7 +135,11 @@ public class GameBoard {
     Player currentPlayer = p1.getId() == playerId ? p1 : p2;
     Move move = new Move(currentPlayer, x, y);
     try {
-      if (playerId != this.getTurn()) {
+      if (playerId != 1 && playerId != 2) {
+        throw new Exception("Not a valid player id!");
+      } else if (x < 0 || x > 2 || y < 0 || y > 2) {
+        throw new Exception("Not a valid move!");
+      } else if (playerId != this.getTurn()) {
         // Player cannot make multiple moves in their turn
         throw new Exception("Please wait for your turn!");
       } else if (!this.isOpenSlot(move)) {
@@ -180,7 +184,7 @@ public class GameBoard {
     int currentPlayerId = currentPlayer.getId();
     
     for (int i = 0; i < boardState.length; i++) {
-      // Check row and if it is filled
+      // Check column and if it is filled
       if (boardState[i][0] == boardState[i][1] && boardState[i][1] == boardState[i][2] 
           && boardState[i][0] != '\u0000' && boardState[i][1] != '\u0000' 
           && boardState[i][2] != '\u0000') {
@@ -189,7 +193,7 @@ public class GameBoard {
         return true;
       }
       
-      // Check column and if it is filled
+      // Check row and if it is filled
       if (boardState[0][i] == boardState[1][i] && boardState[1][i] == boardState[2][i]
           && boardState[0][i] != '\u0000' && boardState[1][i] != '\u0000' 
           && boardState[2][i] != '\u0000') {
