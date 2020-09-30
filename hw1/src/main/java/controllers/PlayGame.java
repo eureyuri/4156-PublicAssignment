@@ -69,7 +69,7 @@ public class PlayGame {
     // Returns the validity response for the move as well as updates the board
     app.post("/move/:playerId", ctx -> {
       // If game board has not been created yet or the game has not been started yet, then return
-      if (gameBoard == null || !gameBoard.isGameStarted()) {
+      if (gameBoard == null) {
         ctx.result("Game has not started yet");
         return;
       }
