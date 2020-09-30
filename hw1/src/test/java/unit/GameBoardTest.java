@@ -1,15 +1,14 @@
 package unit;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-
 import models.GameBoard;
 import models.Message;
 import models.Player;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 
-public class TestGameBoard {
+public class GameBoardTest {
 
   @Test
   public void testGameBoardContructor() {

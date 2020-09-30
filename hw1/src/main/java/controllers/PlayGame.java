@@ -7,7 +7,7 @@ import models.GameBoard;
 import models.Message;
 import org.eclipse.jetty.websocket.api.Session;
 
-class PlayGame {
+public class PlayGame {
 
   private static final int PORT_NUMBER = 8080;
   private static Javalin app;
@@ -21,11 +21,6 @@ class PlayGame {
     app = Javalin.create(config -> {
       config.addStaticFiles("/public");
     }).start(PORT_NUMBER);
-
-    // Test Echo Server
-    app.post("/echo", ctx -> {
-      ctx.result(ctx.body());
-    });
     
     // Redirect player to the View component
     app.get("/newgame", ctx -> {
@@ -52,11 +47,21 @@ class PlayGame {
       ctx.redirect("/tictactoe.html?p=2");
     });
     
+    // End point to return the current state of game board.
+    app.get("/gameBoard", ctx -> {
+      if (gameBoard == null) {
+        ctx.result("Game has not been created yet");
+        return;
+      }
+      ctx.result(gameBoard.toJson());
+    });
+    
     // End point to handle player moves. 
     // Returns the validity response for the move as well as updates the board
     app.post("/move/:playerId", ctx -> {
       // If game board has not been created yet or the game has not been started yet, then return
       if (gameBoard == null || !gameBoard.isGameStarted()) {
+        ctx.result("Game has not started yet");
         return;
       }
       
