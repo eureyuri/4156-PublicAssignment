@@ -236,9 +236,6 @@ public class GameBoardTest {
     assertEquals(msg.getMessage(), "Not a valid move!");
   }
   
-  /**
-   * Move twice in a row.
-   */
   @Test
   public void testMoveNotCorrectTurn() {
     char p1Type = 'X';
@@ -616,8 +613,6 @@ public class GameBoardTest {
     gameBoard.move(2, 2, 1);
     gameBoard.move(1, 0, 2);
     gameBoard.move(2, 1, 2);
-    
-    
     
     Method method = GameBoard.class.getDeclaredMethod("checkWinner", Player.class);
     method.setAccessible(true);

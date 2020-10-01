@@ -38,11 +38,7 @@ public class PlayGameTest {
    */
   @BeforeEach
   public void startNewGame() throws Exception {
-    HttpResponse<?> response = Unirest.get("http://localhost:8080/newgame").asString();
-    
-    // Check if server is running.
-    int restStatus = response.getStatus();
-    assertEquals(restStatus, 200);
+    Unirest.get("http://localhost:8080/newgame").asString();
   }
 
   /**
@@ -168,7 +164,7 @@ public class PlayGameTest {
   }
   
   /**
-   * Test P2 moving before P1 after the game starts. This is not a valid move.
+   * Test P2 making the first move before P1 after the game starts. This is not a valid move.
    */
   @Test
   @Order(8)
@@ -198,9 +194,9 @@ public class PlayGameTest {
     HttpResponse<?> responseMove = Unirest.post("http://localhost:8080/move/1").body("x=0&y=1").asString();
     
     String responseBodyMove = (String) responseMove.getBody();
-    JSONObject jsontMove = new JSONObject(responseBodyMove);
+    JSONObject jsonMove = new JSONObject(responseBodyMove);
     Gson gson = new Gson();
-    Message msg = gson.fromJson(jsontMove.toString(), Message.class);
+    Message msg = gson.fromJson(jsonMove.toString(), Message.class);
     assertEquals(msg.isMoveValidity(), false);
     assertEquals(msg.getCode(), 200);
     assertEquals(msg.getMessage(), "Please wait for your turn!");
@@ -333,6 +329,7 @@ public class PlayGameTest {
     GameBoard gameBoard = gson.fromJson(jsonBoard.toString(), GameBoard.class); 
     assertEquals(gameBoard.isGameStarted(), false);
     assertEquals(gameBoard.isDraw(), true);
+    assertEquals(gameBoard.getWinner(), 0);
   }
   
   /**
@@ -399,6 +396,7 @@ public class PlayGameTest {
     GameBoard gameBoard = gson.fromJson(jsonBoard.toString(), GameBoard.class); 
     assertEquals(gameBoard.isGameStarted(), false);
     assertEquals(gameBoard.isDraw(), true);
+    assertEquals(gameBoard.getWinner(), 0);
   }
   
   /**
@@ -495,6 +493,7 @@ public class PlayGameTest {
     GameBoard gameBoard = gson.fromJson(jsonBoard.toString(), GameBoard.class); 
     assertEquals(gameBoard.isGameStarted(), false);
     assertEquals(gameBoard.isDraw(), true);
+    assertEquals(gameBoard.getWinner(), 0);
   }
   
   /**
@@ -615,7 +614,7 @@ public class PlayGameTest {
   }
 
   /**
-   * This method runs only once after all the test cases have been executed.
+   * This method runs at the end to stop the server.
    */
   @AfterAll
   public static void close() {
