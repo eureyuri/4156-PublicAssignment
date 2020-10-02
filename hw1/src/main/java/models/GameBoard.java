@@ -70,12 +70,12 @@ public class GameBoard {
   
   //  Returns board state
   public char[][] getBoardState() {
-    return boardState;
+    return this.boardState.clone();
   }
   
   //  Sets the board state
   public void setBoardState(char[][] boardState) {
-    this.boardState = boardState;
+    this.boardState = boardState.clone();
   }
   
   //  Returns the winner
@@ -135,14 +135,20 @@ public class GameBoard {
     Player currentPlayer = p1.getId() == playerId ? p1 : p2;
     Move move = new Move(currentPlayer, x, y);
     try {
-      if (playerId != this.getTurn()) {
+      if (this.isDraw() || this.winner != 0) {
+        throw new Exception("Game over!");
+      } else if (!this.gameStarted) {
+        throw new Exception("Game has not started yet!");
+      } else if (playerId != 1 && playerId != 2) {
+        throw new Exception("Not a valid player id!");
+      } else if (x < 0 || x > 2 || y < 0 || y > 2) {
+        throw new Exception("Not a valid move!");
+      } else if (playerId != this.getTurn()) {
         // Player cannot make multiple moves in their turn
         throw new Exception("Please wait for your turn!");
       } else if (!this.isOpenSlot(move)) {
         // Player must choose an open slot 
         throw new Exception("Please select an open slot!");
-      } else if (this.isDraw() || this.winner != 0) {
-        throw new Exception("Game over!");
       }
       
       // The move is valid so assign X or O in the specified position
@@ -180,19 +186,21 @@ public class GameBoard {
     int currentPlayerId = currentPlayer.getId();
     
     for (int i = 0; i < boardState.length; i++) {
-      // Check row and if it is filled
-      if (boardState[i][0] == boardState[i][1] && boardState[i][1] == boardState[i][2] 
-          && boardState[i][0] != '\u0000' && boardState[i][1] != '\u0000' 
-          && boardState[i][2] != '\u0000') {
+      // Check column and if it is filled
+      if (boardState[i][0] != '\u0000'
+          && boardState[i][1] != '\u0000'
+          && boardState[i][2] != '\u0000'
+          && boardState[i][0] == boardState[i][1] && boardState[i][1] == boardState[i][2]) {
         this.setWinner(currentPlayerId);
         this.setGameStarted(false);
         return true;
       }
       
-      // Check column and if it is filled
-      if (boardState[0][i] == boardState[1][i] && boardState[1][i] == boardState[2][i]
-          && boardState[0][i] != '\u0000' && boardState[1][i] != '\u0000' 
-          && boardState[2][i] != '\u0000') {
+      // Check row and if it is filled
+      if (boardState[0][i] != '\u0000' 
+          && boardState[1][i] != '\u0000' 
+          && boardState[2][i] != '\u0000'
+          && boardState[0][i] == boardState[1][i] && boardState[1][i] == boardState[2][i]) {
         this.setWinner(currentPlayerId);
         this.setGameStarted(false);
         return true;
@@ -200,18 +208,20 @@ public class GameBoard {
     }
     
     // Check left diagonal and if it is filled
-    if (boardState[0][0] == boardState[1][1] && boardState[1][1] == boardState[2][2]
-        && boardState[0][0] != '\u0000' && boardState[1][1] != '\u0000' 
-        && boardState[2][2] != '\u0000') {
+    if (boardState[0][0] != '\u0000' 
+        && boardState[1][1] != '\u0000' 
+        && boardState[2][2] != '\u0000'
+        && boardState[0][0] == boardState[1][1] && boardState[1][1] == boardState[2][2]) {
       this.setWinner(currentPlayerId);
       this.setGameStarted(false);
       return true;
     }
     
     // Check right diagonal and if it is filled
-    if (boardState[0][2] == boardState[1][1] && boardState[1][1] == boardState[2][0]
-        && boardState[0][2] != '\u0000' && boardState[1][1] != '\u0000' 
-        && boardState[2][0] != '\u0000') {
+    if (boardState[0][2] != '\u0000' 
+        && boardState[1][1] != '\u0000' 
+        && boardState[2][0] != '\u0000'
+        && boardState[0][2] == boardState[1][1] && boardState[1][1] == boardState[2][0]) {
       this.setWinner(currentPlayerId);
       this.setGameStarted(false);
       return true;
