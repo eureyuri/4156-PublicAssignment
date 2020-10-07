@@ -27,6 +27,27 @@ public class GameBoard {
     this.setWinner(0);
     this.setDraw(false);
   }
+  
+  /**
+   * Another constructor of game board that creates a game board with specified parameters.
+   * @param p1 player 1 with id and type
+   * @param p2 player 2 with id and type
+   * @param gameStarted if game started or not
+   * @param turn 1 if p1, 2 if p2
+   * @param boardState the current board state
+   * @param winner 1 if p1, 2 if p2
+   * @param isDraw indicates if there is a draw
+   */
+  public GameBoard(Player p1, Player p2, boolean gameStarted, 
+      int turn, char[][] boardState, int winner, boolean isDraw) {
+    this.setP1(p1);
+    this.setP2(p2);
+    this.setGameStarted(gameStarted);
+    this.setTurn(turn);
+    this.setBoardState(boardState);
+    this.setWinner(winner);
+    this.setDraw(isDraw);
+  }
 
   //  Returns Player 1
   public Player getP1() {

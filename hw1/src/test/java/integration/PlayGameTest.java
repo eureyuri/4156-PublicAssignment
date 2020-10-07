@@ -612,6 +612,246 @@ public class PlayGameTest {
     assertEquals(msg.getCode(), 200);
     assertEquals(msg.getMessage(), "Not a valid move!");
   }
+  
+  
+  
+  
+  
+  
+  
+  // Robustness Tests
+  
+  /**
+   * Check if database table is clean after a new game starts.
+   */
+  @Test
+  @Order(25)
+  public void checkCleanDB() {
+    Unirest.post("http://localhost:8080/startgame").body("type=X").asString();
+    Unirest.get("http://localhost:8080/joingame").asString();
+    Unirest.post("http://localhost:8080/move/1").body("x=0&y=0").asString();
+    
+    PlayGame.stop();
+    PlayGame.main(new String[0]);
+    
+    Unirest.get("http://localhost:8080/newgame").asString();
+    Unirest.post("http://localhost:8080/startgame").body("type=X").asString();
+    
+    Gson gson = new Gson();
+    HttpResponse<?> responseBoard = Unirest.get("http://localhost:8080/gameBoard").asString();
+    String responseBodyBoard = (String) responseBoard.getBody();
+    JSONObject jsonObject = new JSONObject(responseBodyBoard);
+    GameBoard gameBoard = gson.fromJson(jsonObject.toString(), GameBoard.class);
+    
+    assertArrayEquals(new char[3][3], gameBoard.getBoardState());
+  }
+  
+  /**
+   * Check if game board is preserved after application crash after a move.
+   */
+  @Test
+  @Order(26)
+  public void dataAfterCrashMove() {
+    Unirest.post("http://localhost:8080/startgame").body("type=X").asString();
+    Unirest.get("http://localhost:8080/joingame").asString();
+    Unirest.post("http://localhost:8080/move/1").body("x=0&y=0").asString();
+    
+    PlayGame.stop();
+    PlayGame.main(new String[0]);
+    
+    Gson gson = new Gson();
+    HttpResponse<?> responseBoard = Unirest.get("http://localhost:8080/gameBoard").asString();
+    String responseBodyBoard = (String) responseBoard.getBody();
+    JSONObject jsonObject = new JSONObject(responseBodyBoard);
+    GameBoard gameBoard = gson.fromJson(jsonObject.toString(), GameBoard.class);
+    
+    assertEquals('X', gameBoard.getBoardState()[0][0]);
+  }
+  
+  /**
+   * Application crash after draw. Check if game is still a draw.
+   */
+  @Test
+  @Order(27)
+  public void dataAfterCrashDraw() {
+    Unirest.post("http://localhost:8080/startgame").body("type=X").asString();
+    Unirest.get("http://localhost:8080/joingame").asString();
+    Unirest.post("http://localhost:8080/move/1").body("x=0&y=0").asString();
+    Unirest.post("http://localhost:8080/move/2").body("x=1&y=0").asString();
+    Unirest.post("http://localhost:8080/move/1").body("x=2&y=0").asString();
+    Unirest.post("http://localhost:8080/move/2").body("x=2&y=1").asString();
+    Unirest.post("http://localhost:8080/move/1").body("x=0&y=1").asString();
+    Unirest.post("http://localhost:8080/move/2").body("x=0&y=2").asString();
+    Unirest.post("http://localhost:8080/move/1").body("x=1&y=1").asString();
+    Unirest.post("http://localhost:8080/move/2").body("x=2&y=2").asString();
+    Unirest.post("http://localhost:8080/move/1").body("x=1&y=2").asString();
+    
+    Gson gson = new Gson();
+    HttpResponse<?> responseBoard = Unirest.get("http://localhost:8080/gameBoard").asString();
+    String responseBodyBoard = (String) responseBoard.getBody();
+    JSONObject jsonObject = new JSONObject(responseBodyBoard);
+    GameBoard gameBoard = gson.fromJson(jsonObject.toString(), GameBoard.class);
+    
+    assertEquals(true, gameBoard.isDraw());
+    
+    PlayGame.stop();
+    PlayGame.main(new String[0]);
+    
+    responseBoard = Unirest.get("http://localhost:8080/gameBoard").asString();
+    responseBodyBoard = (String) responseBoard.getBody();
+    jsonObject = new JSONObject(responseBodyBoard);
+    gameBoard = gson.fromJson(jsonObject.toString(), GameBoard.class);
+
+    assertEquals(true, gameBoard.isDraw());
+  }
+  
+  /**
+   * Application crash after win and not new game started. Check if game state is preserved.
+   */
+  @Test
+  @Order(28)
+  public void dataAfterCrashWin() {
+    Unirest.post("http://localhost:8080/startgame").body("type=X").asString();
+    Unirest.get("http://localhost:8080/joingame").asString();
+    
+    Unirest.post("http://localhost:8080/move/1").body("x=0&y=0").asString();
+    Unirest.post("http://localhost:8080/move/2").body("x=0&y=1").asString();
+    Unirest.post("http://localhost:8080/move/1").body("x=1&y=0").asString();
+    Unirest.post("http://localhost:8080/move/2").body("x=0&y=2").asString();
+    Unirest.post("http://localhost:8080/move/1").body("x=2&y=0").asString();
+    
+    Gson gson = new Gson();
+    HttpResponse<?> responseBoard = Unirest.get("http://localhost:8080/gameBoard").asString();
+    String responseBodyBoard = (String) responseBoard.getBody();
+    JSONObject jsonBoard = new JSONObject(responseBodyBoard);
+    GameBoard gameBoard = gson.fromJson(jsonBoard.toString(), GameBoard.class); 
+    
+    assertEquals(gameBoard.isGameStarted(), false);
+    assertEquals(gameBoard.getWinner(), 1);
+    
+    PlayGame.stop();
+    PlayGame.main(new String[0]);
+    
+    responseBoard = Unirest.get("http://localhost:8080/gameBoard").asString();
+    responseBodyBoard = (String) responseBoard.getBody();
+    jsonBoard = new JSONObject(responseBodyBoard);
+    gameBoard = gson.fromJson(jsonBoard.toString(), GameBoard.class);
+
+    assertEquals(gameBoard.isGameStarted(), false);
+    assertEquals(gameBoard.getWinner(), 1);
+  }
+  
+  /**
+   * Check if P1 is preserved if P1 starts the game then crashes.
+   */
+  @Test
+  @Order(29)
+  public void dataAfterCrashStartP1() {
+    Unirest.post("http://localhost:8080/startgame").body("type=X").asString();
+    
+    PlayGame.stop();
+    PlayGame.main(new String[0]);
+    
+    Gson gson = new Gson();
+    HttpResponse<?> responseBoard = Unirest.get("http://localhost:8080/gameBoard").asString();
+    String responseBodyBoard = (String) responseBoard.getBody();
+    JSONObject jsonBoard = new JSONObject(responseBodyBoard);
+    GameBoard gameBoard = gson.fromJson(jsonBoard.toString(), GameBoard.class); 
+    
+    assertEquals(gameBoard.isGameStarted(), false);
+    assertEquals(gameBoard.getP1().getId(), 1);
+    assertEquals(gameBoard.getP1().getType(), 'X');
+  }
+  
+  /**
+   * Check if P2 is preserved after P2 joins and then game crashes.
+   */
+  @Test
+  @Order(30)
+  public void dataAfterCrashP2Join() {
+    Unirest.post("http://localhost:8080/startgame").body("type=X").asString();
+    Unirest.get("http://localhost:8080/joingame").asString();
+    
+    PlayGame.stop();
+    PlayGame.main(new String[0]);
+    
+    Gson gson = new Gson();
+    HttpResponse<?> responseBoard = Unirest.get("http://localhost:8080/gameBoard").asString();
+    String responseBodyBoard = (String) responseBoard.getBody();
+    JSONObject jsonBoard = new JSONObject(responseBodyBoard);
+    GameBoard gameBoard = gson.fromJson(jsonBoard.toString(), GameBoard.class); 
+    
+    assertEquals(gameBoard.isGameStarted(), true);
+    assertEquals(gameBoard.getP2().getId(), 2);
+    assertEquals(gameBoard.getP2().getType(), 'O');
+  }
+  
+  /**
+   * If new game created then crashes, then a new game should be rebooted. 
+   */
+  @Test
+  @Order(31)
+  public void dataAfterCrashNewGame() {
+    PlayGame.stop();
+    PlayGame.main(new String[0]);
+    
+    Gson gson = new Gson();
+    HttpResponse<?> responseBoard = Unirest.get("http://localhost:8080/gameBoard").asString();
+    String responseBodyBoard = (String) responseBoard.getBody();
+    JSONObject jsonBoard = new JSONObject(responseBodyBoard);
+    GameBoard gameBoard = gson.fromJson(jsonBoard.toString(), GameBoard.class); 
+    
+    assertEquals(gameBoard.isGameStarted(), false);
+    assertEquals(gameBoard.getP1().getId(), 0);
+    assertEquals(gameBoard.getP1().getType(), 'N');
+    assertEquals(gameBoard.getP2().getId(), 0);
+    assertEquals(gameBoard.getP2().getType(), 'N');
+    assertEquals(gameBoard.getTurn(), -1);
+    assertEquals(gameBoard.getWinner(), 0);
+    assertEquals(gameBoard.isDraw(), false);
+    assertArrayEquals(gameBoard.getBoardState(), new char[3][3]);
+  }
+  
+  /**
+   * If crash after invalid move, reboot to last valid move.
+   */
+  @Test
+  @Order(32)
+  public void dataAfterCrashInvalidMove() {
+    Unirest.post("http://localhost:8080/startgame").body("type=X").asString();
+    Unirest.get("http://localhost:8080/joingame").asString();
+    Unirest.post("http://localhost:8080/move/1").body("x=0&y=0").asString();
+    HttpResponse<?> responseMove = Unirest.post("http://localhost:8080/move/1").body("x=0&y=1").asString();
+    
+    String responseBodyMove = (String) responseMove.getBody();
+    JSONObject jsonMove = new JSONObject(responseBodyMove);
+    Gson gson = new Gson();
+    Message msg = gson.fromJson(jsonMove.toString(), Message.class);
+    assertEquals(msg.isMoveValidity(), false);
+    assertEquals(msg.getCode(), 200);
+    assertEquals(msg.getMessage(), "Please wait for your turn!");
+    
+    HttpResponse<?> responseBoard = Unirest.get("http://localhost:8080/gameBoard").asString();
+    String responseBodyBoard = (String) responseBoard.getBody();
+    JSONObject jsonBoard = new JSONObject(responseBodyBoard);
+    GameBoard gameBoard = gson.fromJson(jsonBoard.toString(), GameBoard.class); 
+    
+    assertEquals(gameBoard.getTurn(), 2);
+    assertEquals(gameBoard.getBoardState()[0][0], 'X');
+    assertEquals(gameBoard.getBoardState()[0][1], '\u0000');
+    
+    PlayGame.stop();
+    PlayGame.main(new String[0]);
+    
+    responseBoard = Unirest.get("http://localhost:8080/gameBoard").asString();
+    responseBodyBoard = (String) responseBoard.getBody();
+    jsonBoard = new JSONObject(responseBodyBoard);
+    gameBoard = gson.fromJson(jsonBoard.toString(), GameBoard.class);
+
+    assertEquals(gameBoard.getTurn(), 2);
+    assertEquals(gameBoard.getBoardState()[0][0], 'X');
+    assertEquals(gameBoard.getBoardState()[0][1], '\u0000');
+  }
 
   /**
    * This method runs at the end to stop the server.
