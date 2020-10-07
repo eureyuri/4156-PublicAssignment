@@ -9,6 +9,7 @@ import java.lang.reflect.Method;
 import java.sql.SQLException;
 import models.GameBoard;
 import models.Player;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -185,6 +186,15 @@ public class SqliteDatabaseTest {
     assertArrayEquals(gameBoard.getBoardState(), g2.getBoardState());
     assertEquals(gameBoard.getWinner(), g2.getWinner());
     assertEquals(gameBoard.isDraw(), g2.isDraw());
+  }
+  
+  /**
+   * Closing connection with database.
+   * @throws SQLException if error in sqlite
+   */
+  @AfterAll
+  public static void closeConnection() throws SQLException {
+    db.closeConenction();
   }
 
 }
