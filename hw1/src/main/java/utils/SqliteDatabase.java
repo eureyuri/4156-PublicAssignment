@@ -211,6 +211,10 @@ public class SqliteDatabase {
     System.out.println("Table cleaned successfully");  
   }
   
+  /**
+   * Closing connections to the database.
+   * @throws SQLException if sqlite error
+   */
   public void closeConenction() throws SQLException {
     connection.close();
   }
