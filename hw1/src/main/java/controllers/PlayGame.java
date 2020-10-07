@@ -22,8 +22,13 @@ public class PlayGame {
    */
   public static void main(final String[] args) throws SQLException {
     
-    db = new SqliteDatabase();
-    gameBoard = db.getGameBoardData();
+    try {
+      db = new SqliteDatabase();
+      gameBoard = db.getGameBoardData();
+    } catch (Exception e) {
+      gameBoard = null;
+    }
+    
     
     app = Javalin.create(config -> {
       config.addStaticFiles("/public");
@@ -47,6 +52,7 @@ public class PlayGame {
         return;
       }
       
+      db.cleanTable();
       gameBoard = new GameBoard(type);
       db.addGameBoardData(gameBoard);
       ctx.result(gameBoard.toJson());
@@ -94,12 +100,12 @@ public class PlayGame {
       Message validityResponse = gameBoard.move(playerId, x, y);
       ctx.result(validityResponse.toJson());
       
-      // TODO
+      sendGameBoardToAllPlayers(gameBoard.toJson());  
+      
+      // Only persist valid data after response in database
       if (validityResponse.isMoveValidity()) {
         db.addGameBoardData(gameBoard);
       }
-      
-      sendGameBoardToAllPlayers(gameBoard.toJson());  
     });
 
     // Web sockets - DO NOT DELETE or CHANGE

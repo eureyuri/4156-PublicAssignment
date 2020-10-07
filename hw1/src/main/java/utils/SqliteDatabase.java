@@ -171,12 +171,16 @@ public class SqliteDatabase {
       boolean isDraw = result.getBoolean("ISDRAW");
           
       // Reconstructing the board state
+      int offset = 0;
       char[][] boardStateFormat = new char [3][3];
       for (int i = 0; i < boardStateFormat.length; i++) {
         for (int j = 0; j < boardStateFormat.length; j++) {
-          char type = boardState.charAt(i + j) == 'N' ? '\u0000' : boardState.charAt(i + j);
+          char type = boardState.charAt(i + j + offset) == 'N' 
+              ? '\u0000' : boardState.charAt(i + j + offset);
           boardStateFormat[i][j] = type;
         }
+        
+        offset += 2;
       }
       
       GameBoard gameBoard = new GameBoard(new Player(p1Type, p1Id), new Player(p2Type, p2Id), 

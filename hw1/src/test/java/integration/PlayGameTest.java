@@ -670,6 +670,7 @@ public class PlayGameTest {
     GameBoard gameBoard = gson.fromJson(jsonObject.toString(), GameBoard.class);
     
     assertEquals('X', gameBoard.getBoardState()[0][0]);
+    assertEquals(2, gameBoard.getTurn());
   }
   
   /**
