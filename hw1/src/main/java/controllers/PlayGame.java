@@ -2,11 +2,10 @@ package controllers;
 
 import io.javalin.Javalin;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.Queue;
 import models.GameBoard;
 import models.Message;
-import models.Player;
-
 import org.eclipse.jetty.websocket.api.Session;
 import utils.SqliteDatabase;
 
@@ -19,8 +18,9 @@ public class PlayGame {
 
   /** Main method of the application.
    * @param args Command line arguments
+   * @throws SQLException if problem with connection or statement
    */
-  public static void main(final String[] args) {
+  public static void main(final String[] args) throws SQLException {
     
     db = new SqliteDatabase();
     gameBoard = db.getGameBoardData();
@@ -40,21 +40,16 @@ public class PlayGame {
     // Start the game by initializing a game board with player specified type (X or O) 
     // from the request body
     app.post("/startgame", ctx -> {
-      if (gameBoard.getP1() != null) {
-        // GameBoard exists in database
-        ctx.result(gameBoard.toJson());
-      } else {
-        char type = ctx.formParam("type").charAt(0);
-        
-        if (type != 'X' && type != 'O') {
-          ctx.result("Please use either X or O to play.");
-          return;
-        }
-        
-        gameBoard = new GameBoard(type);
-        db.addGameBoardData(gameBoard);
-        ctx.result(gameBoard.toJson());
+      char type = ctx.formParam("type").charAt(0);
+      
+      if (type != 'X' && type != 'O') {
+        ctx.result("Please use either X or O to play.");
+        return;
       }
+      
+      gameBoard = new GameBoard(type);
+      db.addGameBoardData(gameBoard);
+      ctx.result(gameBoard.toJson());
     });
     
     // End point for player 2 to join. Redirects to the View after joining the game. If player 2 

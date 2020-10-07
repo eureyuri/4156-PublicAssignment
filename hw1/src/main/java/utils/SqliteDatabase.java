@@ -2,7 +2,9 @@ package utils;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import models.GameBoard;
 import models.Player;
@@ -14,7 +16,12 @@ public class SqliteDatabase {
   private static final String DB_NAME = "tictactoe.db";
   private static final String TABLE_NAME = "GameBoard";
 
-  public SqliteDatabase() {
+  /**
+   * Constructor for the sqlite database.
+   * Creates a connection and a table if it doesn't exist in the database.
+   * @throws SQLException if problem with connection or statement 
+   */
+  public SqliteDatabase() throws SQLException {
     connection = null;
     key = 1;
     
@@ -22,23 +29,29 @@ public class SqliteDatabase {
     this.createTable();
   }
   
+  /**
+   * Creates a connection with the database.
+   */
   private void createConnection() {
     try {
       Class.forName("org.sqlite.JDBC");
       connection = DriverManager.getConnection("jdbc:sqlite:" + DB_NAME);      
     } catch (Exception e) {
       System.err.println(e.getClass().getName() + ": " + e.getMessage());
-      System.exit(0);
+      return;
     }
     
     System.out.println("Opened database successfully");
   }
   
-  private void createTable() {
-    Statement statement = null;
+  /**
+   * Creating the table for game board if it does not exist.
+   * @throws SQLException if problem with connection or statement
+   */
+  private void createTable() throws SQLException {
+    Statement statement = connection.createStatement();
     
     try {
-      statement = connection.createStatement();
       String sql = "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " "
                   + "(ID INT PRIMARY KEY          NOT NULL," 
                   + " P1_ID         INT                   , "
@@ -51,19 +64,29 @@ public class SqliteDatabase {
                   + " WINNER        INT           NOT NULL, "
                   + " ISDRAW        BOOLEAN       NOT NULL)";
       statement.executeUpdate(sql);
+    } finally { 
       statement.close();
-    } catch (Exception e) { 
-      System.err.println(e.getClass().getName() + ": " + e.getMessage());
-      System.exit(0);
     }
     
     System.out.println("Table created successfully");     
   }
   
-  public void addGameBoardData(GameBoard gameBoard) {
+  /**
+   * Stores the given GameBoard to the database.
+   * Need to make a string representation for all data to store in the database.
+   * @param gameBoard to be stored in the database
+   * @throws SQLException if problem with connection or statement
+   */
+  public void addGameBoardData(GameBoard gameBoard) throws SQLException {
+    String sql = "INSERT INTO " + TABLE_NAME 
+        + " (ID, P1_ID, P1_TYPE, P2_ID, P2_TYPE, GAMESTARTED, TURN, BOARDSTATE, WINNER, ISDRAW)"
+        + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    PreparedStatement pstmt = connection.prepareStatement(sql);
+    
     try {
       connection.setAutoCommit(false);
       System.out.println("Inserting game board data.");
+      pstmt.setInt(1, key);
       
       String p1Id;
       String p1Type;
@@ -74,6 +97,8 @@ public class SqliteDatabase {
         p1Id = Integer.toString(gameBoard.getP1().getId());
         p1Type = String.valueOf(gameBoard.getP1().getType());
       }
+      pstmt.setString(2, p1Id);
+      pstmt.setString(3, p1Type);
       
       String p2Id;
       String p2Type;
@@ -84,54 +109,55 @@ public class SqliteDatabase {
         p2Id = Integer.toString(gameBoard.getP2().getId());
         p2Type = String.valueOf(gameBoard.getP2().getType());
       }
+      pstmt.setString(4, p2Id);
+      pstmt.setString(5, p2Type);
       
       String gameStarted = gameBoard.isGameStarted() ? "1" : "0";
-      String turn = Integer.toString(gameBoard.getTurn());
-      String winner = Integer.toString(gameBoard.getWinner());
-      String isDraw = gameBoard.isDraw() ? "1" : "0";
+      pstmt.setString(6, gameStarted);
       
-      String boardState = "";
-      for (int i = 0; i < gameBoard.getBoardState().length; i++) {
+      String turn = Integer.toString(gameBoard.getTurn());
+      pstmt.setString(7, turn);
+      
+      // Creating a string representation of the board state
+      StringBuffer buf = new StringBuffer();
+      for (int i = 0; i < gameBoard.getBoardState().length; ++i) {
         for (int j = 0; j < gameBoard.getBoardState()[i].length; j++) {
           char type = gameBoard.getBoardState()[i][j] == '\u0000' ? 'N' 
               : gameBoard.getBoardState()[i][j];
-          boardState += type;
+          buf.append(type);
         }
       }
+      String boardState = buf.toString();
+      pstmt.setString(8, boardState);
       
-      String sql = "INSERT INTO " + TABLE_NAME 
-          + " (ID, P1_ID, P1_TYPE, P2_ID, P2_TYPE, GAMESTARTED, TURN, BOARDSTATE, WINNER, ISDRAW)"
-          + "VALUES ("
-          + Integer.toString(key) + ", "
-          + p1Id + ", "
-          + "'" + p1Type + "', "
-          + p2Id + ", "
-          + "'" + p2Type + "', "
-          + gameStarted + ", "
-          + turn + ", "
-          + "'" + boardState + "', "
-          + winner + ", "
-          + isDraw + ");";
+      String winner = Integer.toString(gameBoard.getWinner());
+      pstmt.setString(9, winner);
       
-      Statement statement = connection.createStatement();
-      statement.execute(sql);
-      statement.close();
+      String isDraw = gameBoard.isDraw() ? "1" : "0";
+      pstmt.setString(10, isDraw);
+      
+      pstmt.executeUpdate();
       connection.commit();
       
       key++;
-      
-    } catch (Exception e) {
-      System.err.println(e.getClass().getName() + ": " + e.getMessage());
-      System.exit(0);
+    } finally {
+      pstmt.close();
     }
+    
   }
   
-  public GameBoard getGameBoardData() {
+  /**
+   * Retrieving data from the database. 
+   * @return GameBoard that was stored in the database
+   * @throws SQLException if problem with connection or statement 
+   */
+  public GameBoard getGameBoardData() throws SQLException {
+    Statement statement = connection.createStatement();
+    
     try {
       System.out.println("Getting game board data from database.");
       
       String sql = "SELECT * FROM " + TABLE_NAME + " ORDER BY ID DESC LIMIT 1";
-      Statement statement = connection.createStatement();      
       ResultSet result = statement.executeQuery(sql);
       
       int p1Id = result.getInt("P1_ID");
@@ -144,6 +170,7 @@ public class SqliteDatabase {
       int winner = result.getInt("WINNER");
       boolean isDraw = result.getBoolean("ISDRAW");
           
+      // Reconstructing the board state
       char[][] boardStateFormat = new char [3][3];
       for (int i = 0; i < boardStateFormat.length; i++) {
         for (int j = 0; j < boardStateFormat.length; j++) {
@@ -155,31 +182,26 @@ public class SqliteDatabase {
       GameBoard gameBoard = new GameBoard(new Player(p1Type, p1Id), new Player(p2Type, p2Id), 
           gameStarted, turn, boardStateFormat, winner, isDraw);
       
-      statement.close();
-      
       return gameBoard;
-      
-    } catch (Exception e) {
-//      System.err.println(e.getClass().getName() + ": " + e.getMessage());
-      System.out.println("Empty databse");
-      return null;
-//      System.exit(0);
+    } finally {
+      statement.close();
     }
   }
   
-  public void cleanTable() {
-    Statement statement = null;
+  /**
+   * Cleaning the table so that no records are present. 
+   * @throws SQLException if problem with connection or statement 
+   */
+  public void cleanTable() throws SQLException {
+    Statement statement = connection.createStatement();
     
     try {
       connection.setAutoCommit(false);
-      statement = connection.createStatement();
       String sql = "DELETE FROM " + TABLE_NAME;
       statement.executeUpdate(sql);
-      statement.close();
       connection.commit();
-    } catch (Exception e) { 
-      System.err.println(e.getClass().getName() + ": " + e.getMessage());
-      System.exit(0);
+    } finally {
+      statement.close();
     }
     
     System.out.println("Table cleaned successfully");  

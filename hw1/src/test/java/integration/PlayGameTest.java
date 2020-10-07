@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.google.gson.Gson;
 import controllers.PlayGame;
+import java.sql.SQLException;
 import kong.unirest.HttpResponse;
 import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
@@ -25,9 +26,10 @@ public class PlayGameTest {
   /**
    * Runs only once before the testing starts.
    * Starts the server.
+   * @throws SQLException if problem with connection or statement
    */
   @BeforeAll
-  public static void init() {
+  public static void init() throws SQLException {
     // Start Server
     PlayGame.main(new String[0]);
     System.out.println("Starting the server.");
@@ -623,10 +625,11 @@ public class PlayGameTest {
   
   /**
    * Check if database table is clean after a new game starts.
+   * @throws SQLException if problem with connection or statement
    */
   @Test
   @Order(25)
-  public void checkCleanDB() {
+  public void checkCleanDB() throws SQLException {
     Unirest.post("http://localhost:8080/startgame").body("type=X").asString();
     Unirest.get("http://localhost:8080/joingame").asString();
     Unirest.post("http://localhost:8080/move/1").body("x=0&y=0").asString();
@@ -648,10 +651,11 @@ public class PlayGameTest {
   
   /**
    * Check if game board is preserved after application crash after a move.
+   * @throws SQLException if problem with connection or statement
    */
   @Test
   @Order(26)
-  public void dataAfterCrashMove() {
+  public void dataAfterCrashMove() throws SQLException {
     Unirest.post("http://localhost:8080/startgame").body("type=X").asString();
     Unirest.get("http://localhost:8080/joingame").asString();
     Unirest.post("http://localhost:8080/move/1").body("x=0&y=0").asString();
@@ -670,10 +674,11 @@ public class PlayGameTest {
   
   /**
    * Application crash after draw. Check if game is still a draw.
+   * @throws SQLException if problem with connection or statement
    */
   @Test
   @Order(27)
-  public void dataAfterCrashDraw() {
+  public void dataAfterCrashDraw() throws SQLException {
     Unirest.post("http://localhost:8080/startgame").body("type=X").asString();
     Unirest.get("http://localhost:8080/joingame").asString();
     Unirest.post("http://localhost:8080/move/1").body("x=0&y=0").asString();
@@ -707,10 +712,11 @@ public class PlayGameTest {
   
   /**
    * Application crash after win and not new game started. Check if game state is preserved.
+   * @throws SQLException if problem with connection or statement
    */
   @Test
   @Order(28)
-  public void dataAfterCrashWin() {
+  public void dataAfterCrashWin() throws SQLException {
     Unirest.post("http://localhost:8080/startgame").body("type=X").asString();
     Unirest.get("http://localhost:8080/joingame").asString();
     
@@ -743,10 +749,11 @@ public class PlayGameTest {
   
   /**
    * Check if P1 is preserved if P1 starts the game then crashes.
+   * @throws SQLException if problem with connection or statement
    */
   @Test
   @Order(29)
-  public void dataAfterCrashStartP1() {
+  public void dataAfterCrashStartP1() throws SQLException {
     Unirest.post("http://localhost:8080/startgame").body("type=X").asString();
     
     PlayGame.stop();
@@ -765,10 +772,11 @@ public class PlayGameTest {
   
   /**
    * Check if P2 is preserved after P2 joins and then game crashes.
+   * @throws SQLException if problem with connection or statement
    */
   @Test
   @Order(30)
-  public void dataAfterCrashP2Join() {
+  public void dataAfterCrashP2Join() throws SQLException {
     Unirest.post("http://localhost:8080/startgame").body("type=X").asString();
     Unirest.get("http://localhost:8080/joingame").asString();
     
@@ -788,10 +796,11 @@ public class PlayGameTest {
   
   /**
    * If new game created then crashes, then a new game should be rebooted. 
+   * @throws SQLException if problem with connection or statement
    */
   @Test
   @Order(31)
-  public void dataAfterCrashNewGame() {
+  public void dataAfterCrashNewGame() throws SQLException {
     PlayGame.stop();
     PlayGame.main(new String[0]);
     
@@ -814,10 +823,11 @@ public class PlayGameTest {
   
   /**
    * If crash after invalid move, reboot to last valid move.
+   * @throws SQLException if problem with connection or statement
    */
   @Test
   @Order(32)
-  public void dataAfterCrashInvalidMove() {
+  public void dataAfterCrashInvalidMove() throws SQLException {
     Unirest.post("http://localhost:8080/startgame").body("type=X").asString();
     Unirest.get("http://localhost:8080/joingame").asString();
     Unirest.post("http://localhost:8080/move/1").body("x=0&y=0").asString();
