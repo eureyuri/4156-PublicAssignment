@@ -29,6 +29,23 @@ public class GameBoardTest {
   }
   
   @Test
+  public void testGameBoardContructor2() {
+    Player p1 = new Player('X', 1);
+    Player p2 = new Player('O', 2);
+    GameBoard gameBoard = new GameBoard(p1, p2, false, 1, new char[3][3], 0, false);
+    
+    assertEquals(gameBoard.getP1().getType(), p1.getType());
+    assertEquals(gameBoard.getP1().getId(), p1.getId());
+    assertEquals(gameBoard.getP2().getType(), p2.getType());
+    assertEquals(gameBoard.getP2().getId(), p2.getId());
+    assertEquals(gameBoard.isGameStarted(), false);
+    assertEquals(gameBoard.getTurn(), 1);
+    assertArrayEquals(gameBoard.getBoardState(), new char[3][3]);
+    assertEquals(gameBoard.getWinner(), 0);
+    assertEquals(gameBoard.isDraw(), false);
+  }
+  
+  @Test
   public void testSetP1() {
     char p1Type = 'X';
     GameBoard gameBoard = new GameBoard(p1Type);
